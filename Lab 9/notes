@@ -1,0 +1,38 @@
+Lab 9 to-do
+
+1. 10 sentences where eng -> tdh generates
+2. 7 sentences where sje -> tdh generates
+3. Investigate if we need transfer rules
+4. Need to ask emily what to do about S vs VP Coordination
+see sentences 9 and 10 -> 10 is supposed to use VP coordination
+5. eng -> tdh #8 our coordination strategy does not pass up pernum features because we don't know what the pernum of conjunctions looks like in Thulung
+is 3pl and 3pl -> 3pl? Or is it something else?
+
+
+           (1) (2) (3) (4) (5) (8) (9) (10) (15) (16) (17) (19)
+eng -> tdh (y) (y) (y) (y) (y) (y) (y) (--) (--)
+sje -> tdh (y) (y) (y) (y) (y) (y) (y) (y)
+tdh -> eng (y) (y) (y) (y) (y) (y) (n) (--)
+tdh -> sje (y) (y) (y) (y) (y) (y) (y) (y)
+
+
+TO-DO
+1. Trigger rules for semantically empty copulas
+2. Transfer rules
+ -- locative _in_p_rel transfer rules
+ -- *TRY* VP coordination transfer rule for intransitive and monotransitive coordination using prodrop
+
+
+ Friday sync
+ - verb endings for 15&17 -> getting bu along with bu_mi
+ - 16 some issue related to _in_p_rel
+
+
+ tried 
+ #25 -> khlea-mim ʌms-mi mala subupo-mim ʌms-mi 
+ but mala is "if then"
+ it does show we have some sort of support for adverbial clause modifiers but would need more work to add because/after
+
+
+ need to add constraint where copula tense and affix tense must match
+ - go ba-ŋu ma ʌms-ŋu should not work but it does

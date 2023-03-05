@@ -1,0 +1,408 @@
+Ling 567 / Bender
+Thulung | tdh
+Dolapo Martins
+Zoe Fang
+
+--------------------------------------------------------------------------------
+Description of non-verbal predicate behavior in Thulung
+--------------------------------------------------------------------------------
+Thulung licenses the NP-predicating copula as well as the traditional copula, with APs and locative-PPs.
+
+The behavior of the copula is not affected by the tense. However, its form changes based on whether it is non-past or past tense. The non-past copula is
+/bu/ and the past copula is /ba/. Unlike our analysis of verbs, tense is directly on the copula, instead of being introduced via an affix. Similar to our main verbs, the copula does inflect based on the characteristics of the subject.
+
+In our descriptive materials, the NP-predicating copula is called the equative predication (page 185). 
+
+            mɯ      mytsy   a-pap-ku            ŋopsɯ   bu
+            mɯ      mytsy   a       -pap    -ku            ŋopsɯ   bu
+            that    man     1POSS   -father -GEN           friend  be.3s
+            That man is my father's friend
+
+            go  dzɔŋgɔli        bu-ŋu
+            1s  N.forest-man    be-1s
+            I am a forest man
+
+Based on the provided IGT, we have a constraint on this copula that the two items on its argument structure list must both be case nominative. We added this constraint because in both examples, there is no case marker on the object.
+Both /ŋopsɯ/ and /dzɔŋgɔli/ are bare. In Thulung, only the nominative case does not have an overt case marker.
+
+The traditional copula is used in locational predications and with APs. We analyze our locative NPs as PPs, however, in our descriptive materials there is no mention of adpositions in Thulung. Common English prepositions like out, across, outside are glossed as a noun (1), part of a (noun+locative) construction (2), the semantics of the verb (3), or no clear explanation (4).
+
+(1) bju     rokphaɖ-ɖa-m            patshi      bju-ka      "..."
+    eagle   arrive.here-3s.PST-NOM  N.after     eagle-ERG   "..."
+    After the eagle arrived, the eagle [said] "..."
+
+(2) gumi    del-ra       bu-mi
+    3p      village-LOC      be.3p
+    She is at the village.
+
+(3) boro pakhara lu-mu              mal-saŋa           bu
+    frog outside go.out-NOM.inf     search-AC+EMPH     be.3s
+    The frog is trying to get outside.
+
+(4) a-wotsy pakha lɔ-mri
+    1POSS-husband outside go-3p
+    My husband went outside.
+
+One of the locative affixes in Thulung is /-ra/. Based on (3) and (4), /pakha-/ might be to be a stem which can be inflected (3). This further adds to our reasoning that this should be analyzed as a noun, along with /patshi/ in (1).
+
+We use the following IGT to motivate our analysis of APs and locative NPs as standalone predicates. This traditional copula is semantically empty.
+
+            #75
+            Source: e
+            Vetted: f
+            Judgment: g
+            Phenomena: {cop}
+            inima-del       dzɯpa       bu
+            2POSS-village   beautiful   be.3sg.npst
+            'Your village is beautiful'
+
+            #76
+            Source: e
+            Vetted: f
+            Judgment: g
+            Phenomena: {cop}
+            gumi    del-ra       bu
+            3sg     village-LOC  be.3sg.npst
+            She is at the village.
+
+Locative NPs take one of the three types of locatives in Thulung as an affix. Because Thulung has SOV order, these can be thought of as prepositions. They are then treated as PPs which modify the copula. 
+    [PP V(P)] -> VP
+
+Also, we were unsure if locative verbs are only as described with the semantics in the Lab 7 instructions (be-located) or if other verbs like in (3) are considered locative-verbs. Nonetheless, we didn't get a chance to implement locative-verb-lex or ask questions about it, though we suspect it applies to our language.
+
+--------------------------------------------------------------------------------
+Implementation of non-verbal predicate behavior in Thulung
+--------------------------------------------------------------------------------
+1. Copulas
+There are two stems for copula in Thulung: 'bu-' [TENSE nonpast], and 'ba-' [TENSE past]. So we have two entries in both np-pred-copula and copula.
+--------------------------
+1.1. NP predicating copula
+--------------------------
+For np-pred-copula, we first define a parent lexical type:
+
+cop-np-pred-lex := norm-sem-lex-item & verb-lex & transitive-lex-item &
+  [ SYNSEM [ LOCAL.CAT [ HEAD verb &
+                            [ NMZ - ],
+			 VAL [ SUBJ < #subj >,
+			       COMPS < #comps > ] ],
+	     L-QUE -,
+             SUBORDINATED none ],
+    ARG-ST < #subj & [ LOCAL.CAT cat-sat &
+				 [ VAL.SPR < >,
+				   HEAD noun &
+				      [ CASE nom ] ] ],
+             #comps &
+             [ LOCAL.CAT cat-sat &
+                         [ VAL.SPR < >,
+			   HEAD noun &
+                                [ CASE nom ] ] ] > ].
+
+The parent type inherits its verbiness from their parent types, and enforces the subject and predicated to have nominative case. There are two positions we attempted to place cop-np-pred-lex. The first one is under erg-dat-transitive-verb-lex, but the case constraints, as the name shows, conflict with the case constraints of cop-np-pred-lex. The second one is under the previous verb-lex, which has a set of obligatory rules including aspect, mood, etc., which do not apply to copula in Thulung. So we moved this set of rules from verb-lex to one level down to main-verb-lex (shown below). 
+
+main-verb-lex := verb-lex & basic-verb-lex & basic-non-wh-word-lex & ASPECT-POSITION-CLASS-rule-dtr & GENITIVIZATION-or-NOMINALIZATION-rule-dtr & HEARSAY-Marking-Position-Class-rule-dtr & INTRANSITIVE-TENSE-ROLE-MARKING-or-TRANSITIVE-ROLE-MARKING-rule-dtr & MOOD-Position-Class-rule-dtr & NEGATION-position-class-rule-dtr & ROLE-POSITION-CLASS-rule-dtr & need-to-add-mood-rule-dtr &
+[ INFLECTED [ ASPECT-POSITION-CLASS-FLAG -,
+                ROLE-POSITION-CLASS-FLAG -,
+                MOOD-POSITION-CLASS-FLAG -,
+                1SG-PATIENT-FLAG na-or--,
+                1DE-PATIENT-FLAG na-or--,
+                1DI-PATIENT-FLAG na-or--,
+                1PE-PATIENT-FLAG na-or--,
+                1PI-PATIENT-FLAG na-or--,
+                UNDERSPECIFIED-PATIENT-FLAG na-or--,
+                3SG-PATIENT-FLAG na-or--,
+                ADD-NEGATION-TO-VERB-FLAG na-or-- ],
+
+To account for the pernum inflection, we defined a new set of rules:
+(We have not yet implemented past tense pernum rules.)
+copula-npst-pernum-marker-lex-rule-super := add-only-no-ccont-rule &
+ [ INFLECTED #infl,
+   DTR copula-npst-dtr &
+      [ INFLECTED #infl ] ].
+
+After we defined the parent type, we defined the two verb-lex under the parent type with their tense specified separately:
+
+copula-np-pred-npst-verb-lex := cop-np-pred-lex & copula-npst-dtr &
+  [ SYNSEM.LOCAL.CONT.HOOK.INDEX.E.TENSE nonpast ].
+
+copula-np-pred-pst-verb-lex := cop-np-pred-lex &
+  [ SYNSEM.LOCAL.CONT.HOOK.INDEX.E.TENSE past ].
+
+Example:
+Judgment: g
+Khlea subupo bu
+dog   cat    be
+The dog is the cat.
+Ambiguity: NP coordination lacks constraints in pernum; 3sg is zero-morphemic, and we have not changed copula-npst-dtr to be obligatory on the np-pred-copula.
+In the simple MRS, the copula links the dog to the cat.
+
+Example:
+Judgment: g
+Gana subupo bu-na
+2sg.pron cat be-2sg.npst
+You are a cat.
+We do not see ambiguity from zero-morpheme here, but NP-coord ambiguity persists.
+
+--------------------------------
+1.2. copula (semantically empty)
+--------------------------------
+Similarly, we defined a parent type first for copula:
+
+cop-lex := basic-verb-lex-super & trans-first-arg-raising-lex-item-2 &
+  [ SYNSEM.LOCAL [ CAT.VAL [ SUBJ < #subj >,
+                             COMPS < #comps >,
+                             SPR < >,
+                             SPEC < > ],
+                   CONT.HOOK.XARG #xarg ],
+    ARG-ST < #subj &
+             [ LOCAL [ CONT.HOOK.INDEX #xarg,
+                       CAT [ VAL [ SPR < >,
+                                   COMPS < > ],
+                             HEAD noun ] ] ],
+             #comps &
+             [ LOCAL.CAT [ VAL [ COMPS < > ],
+                           HEAD +jp ] ] > ].
+This copula can take AP or PP as complement. 
+
+We also have the two copula lexes with different tenses. The nonpast copula goes through the same set of inflection rules as the np-predicating-copula:
+
+copula-be-npst-cop-lex := cop-lex & copula-npst-dtr &
+  [ SYNSEM.LOCAL.CONT.HOOK.INDEX.E.TENSE nonpast ].
+
+copula-be-pst-cop-lex := cop-lex &
+  [ SYNSEM.LOCAL.CONT.HOOK.INDEX.E.TENSE past ].
+
+Example:
+Judgment: g
+Gana jakke bu-na
+2sg.pron small be-2sg.npst
+You are small.
+This sentence does parse.
+
+2. Locative NPs
+We implemented the locative NP construction in Thulung through locative-pp-phrase. Since we see ambiguity from NP coordination rules, we constrain the daughter of this rule to have COORD -:
+
+locative-pp-phrase := unary-phrase &
+[ SYNSEM [ NON-LOCAL #nl,
+           LOCAL.CAT [ HEAD adp & [ MOD < [ LOCAL intersective-mod &
+                                                    [ CAT.HEAD verb,
+                                                      CONT.HOOK.INDEX #xarg ] ] > ],
+		          VAL [ COMPS < >,
+			        SUBJ < >,
+			        SPR < > ]]],
+    C-CONT [ HOOK [ LTOP #ltop,
+		    INDEX #index,
+		    XARG #xarg ],
+	  RELS.LIST < arg12-ev-relation &
+		   [ PRED "_in_p_rel",
+		     LBL #ltop,
+		     ARG0 #index,
+		     ARG1 #xarg,
+		     ARG2 #dtr ] >,
+	     HCONS.LIST < >  ],
+	  ARGS < [ SYNSEM [ NON-LOCAL #nl,
+		            LOCAL [ CAT [ HEAD noun & [CASE loc],
+		                          VAL.SPR < > ],
+			                  CONT.HOOK [ INDEX #dtr ],
+                        COORD - ] ] ] >].
+
+Example:
+Judgment: g
+Gumimim del-ra bu-mi
+3pl.pron village-LOC be-3pl.npst
+They are at the village.
+We see ambiguities in bu and the PP. Why are ADJ-HEAD-INT and ADJ-HEAD licensing the unification of del-ra and bu-mi? The copula here is the np-predicating-cop. We constrained the complement to be nominative case, why is it unifying with del-ra (locative), and is del-ra adjective or PP here?
+We also see the np-pred-cop selecting PP in the third tree, using HEAD-SPEC, should we constrain the SPR in cop-np-pred-lex?
+The fourth tree is the tree we want.
+
+3. NP coordination
+After implementing the locative-pp-phrase, we see ambiguity from NP-top, so we constrain the case in np2-top so that the daughters must have matching case, and in np2-bottom so that the daughter passes the case to the parent. 
+
+np2-top-coord-rule := basic-np-top-coord-rule & apoly-top-coord-rule &
+  [ SYNSEM.LOCAL [ CAT.HEAD.CASE #case,
+                   COORD-STRAT "2" ],
+    RCOORD-DTR.SYNSEM.LOCAL.CAT.HEAD.CASE #case,
+    LCOORD-DTR.SYNSEM.LOCAL.CAT.HEAD.CASE #case ].
+
+np2-bottom-coord-rule := unary-bottom-coord-rule & np-bottom-coord-phrase &
+  [ SYNSEM.LOCAL [ COORD-STRAT "2",
+                   COORD-REL.PRED "_and_coord_rel" ,
+                   CAT.HEAD.CASE #case ],
+    ARGS < [SYNSEM.LOCAL.CAT.HEAD.CASE #case ] > ].
+
+Example:
+Judgment: g
+Gumumim gana bu-mi
+3pl.pron 2sg.pron be-3pl.npst
+They are you.
+This sentence has two trees.
+The first reading is "They are them and you.", since 1. Thulung is a pro-drop language 2. Subject and verb agrees in pernum 3. Coordinated nouns have the same case.
+The second reading is "They are you."
+
+Example:
+Judgment: u
+Gumumim-ka gana bu-mi
+3pl.pron-erg 2sg.pron be-3pl.npst
+They are you.
+This string does not parse, since the two nouns have different cases, and bu selects nominative subject.
+
+--------------------------------------------------------------------------------
+Machine translation of items 15-17
+--------------------------------------------------------------------------------
+We are still unable to get transfer working, even with the changes you suggested in Lab 6 comments.
+
+Our steps are as follows 
+(1) verify that symlink in mmt/grammars/tdh is our latest Lab 7 grammar
+(2) recompile grammar at mmt/grammars/tdh
+(3) cd mmt/tm & mv gen tdh 
+(4) recompile grammar at mmt/tm/tdh
+(5) run ./translate-line.sh eng tdh LINE at mmt
+
+We are getting the below output for lines 15-16. We get no other output. 
+
+(15)
+ubuntu@lkb:~/Documents/thulung/mmt$ ./translate-line.sh eng tdh 15
+NOTE: 1 readings, added 136 / 55 edges to chart (14 fully instantiated, 24 actives used, 11 passives used)	RAM: 544k
+NOTE: parsed 1 / 1 sentences, avg 544k, time 0.00335s
+NOTE: 1 transfer results	RAM: 14k
+NOTE: transfered 1 / 1 sentences, avg 14k, time 0.00081s
+NOTE: 19 passive, 157 active edges in final generation chart; built 47 passives total. [0 results]
+
+NOTE: generated 0 / 1 sentences, avg 459k, time 0.00551s
+NOTE: transfer did 0 successful unifies and 0 failed ones
+
+(16)
+ubuntu@lkb:~/Documents/thulung/mmt$ ./translate-line.sh eng tdh 16
+NOTE: 1 readings, added 206 / 75 edges to chart (26 fully instantiated, 34 actives used, 18 passives used)	RAM: 707k
+NOTE: parsed 1 / 1 sentences, avg 707k, time 0.00501s
+NOTE: 1 transfer results	RAM: 24k
+NOTE: transfered 1 / 1 sentences, avg 24k, time 0.00293s
+NOTE: 36 passive, 169 active edges in final generation chart; built 77 passives total. [0 results]
+
+NOTE: generated 0 / 1 sentences, avg 730k, time 0.00642s
+NOTE: transfer did 0 successful unifies and 0 failed ones
+
+For line (17), we do get output, however, it doesn't seem to work.
+ubuntu@lkb:~/Documents/thulung/mmt$ ./translate-line.sh eng tdh 17
+NOTE: 1 readings, added 168 / 63 edges to chart (17 fully instantiated, 30 actives used, 13 passives used)	RAM: 621k
+NOTE: 1 transfer results	RAM: 25k
+NOTE: parsed 1 / 1 sentences, avg 621k, time 0.00730s
+NOTE: transfered 1 / 1 sentences, avg 25k, time 0.00291s
+Khlea-ʔa subupo-ʔa bu
+Khlea-ʔa subupo-ʔa bu-mi
+.
+.
+.
+Khlea-mim-la subupo-mim bu-mi
+Khlea-mim-ju subupo-mim bu-mi
+NOTE: 40 passive, 184 active edges in final generation chart; built 98 passives total. [392 results]
+
+NOTE: generated 1 / 1 sentences, avg 16008k, time 0.42690s
+NOTE: transfer did 0 successful unifies and 0 failed ones
+
+QUESTION: the output says parsed 1/1 and transfered 1/1 but then it also says generated 0/1 and the last line says 0 successful unifies and 0 failed ones.
+(1) What is the difference between generate and transfer?
+(2) How can we have both 0 failures and 0 successes?
+(3) How do we debug this? How do we check the MRS via ace?
+
+Interestingly, translating from tdh -> eng does seem to work. We are not sure how to proceed.
+
+(17)
+ubuntu@lkb:~/Documents/thulung/mmt$ ./translate-line.sh tdh eng  17
+NOTE: 2 readings, added 86 / 39 edges to chart (21 fully instantiated, 14 actives used, 9 passives used)	RAM: 788k
+NOTE: parsed 1 / 1 sentences, avg 788k, time 0.01121s
+NOTE: 1 transfer results	RAM: 39k
+NOTE: 1 transfer results	RAM: 25k
+NOTE: transfered 2 / 2 sentences, avg 32k, time 0.00525s
+NOTE: 53 passive, 235 active edges in final generation chart; built 61 passives total. [0 results]
+
+Dogs were cats
+The dogs were cats
+Dogs are cats
+Dogs were the cats
+Dogs are the cats
+The dogs are the cats
+The dogs were the cats
+The dogs are cats
+NOTE: 40 passive, 229 active edges in final generation chart; built 46 passives total. [8 results]
+
+NOTE: generated 1 / 2 sentences, avg 2399k, time 0.02363s
+NOTE: transfer did 4 successful unifies and 8 failed ones
+
+--------------------------------------------------------------------------------
+Description of wh-question non-verbal predicate behavior in Thulung
+--------------------------------------------------------------------------------
+N/A. Our descriptive materials do not give a prose description of wh-questions in Thulung, nor adequate examples of wh-questions from which we can infer the behavior. We also do not have simple wh constructions. Consequently, we are not able to analyze wh-questions let alone wh-questions + non-verbal predicates. Based on our discussion board discussion, we do not think we will be able to analyze wh-questions in Thulung at all.
+
+--------------------------------------------------------------------------------
+                        Focus marker (re) + questions
+--------------------------------------------------------------------------------
+    bju     rokphaɖ-ɖa-m            patshi      bju-ka      "bante re   ane
+    eagle   arrive.here-3s.PST-NOM  N.after     eagle-ERG   "where FOC  today
+
+    mini    re      mur     nem         bante   re      ham     re?"
+    human   FOC     smell   smell.3s    where   FOC     what    FOC?"
+
+    After the eagle arrived, the eagle [said] "Where is the human smell coming from today, where and what?"
+--------------------------------------------------------------------------------
+    ɔbɔ     gani    re      ŋado-m,     go  re      ŋado-m?
+    Now     2p      FOC     first-NOM   1s  FOC     first-NOM
+    So who then was here first, me or you?
+    (NOM = nominalized)
+--------------------------------------------------------------------------------
+                        Embedded quotations with questions
+--------------------------------------------------------------------------------
+    memma "mima,        a-lwak              ne  ba      re  lɔs-ta"     ra  ma then    grandmother 3-POSS-y.sibling    TOP where   FOC go-3s.PST   say AS
+
+    hilaby-ʔe
+    ask.3s/3s.-HS
+    (AS = Anterior Sequencer)
+
+    After that, "Grandmother, where did my little sister go?", he asks
+--------------------------------------------------------------------------------
+    "bante lɔs-ta       boro" ra-tsi        ma  khɔtle  thɯ     mal-tsi
+    "where go-3s.PST    frog" say-3d/3s     AS  all     there   search-3d
+    "Where did the frog go?" they say, and search everywhere
+--------------------------------------------------------------------------------
+    page 369
+    i-lwa           pi-ra       ta          haŋko       bɔllɯ   dym-na?
+    2POSS-hand      bring-2IMP  N.indeed    how.much    N.fat   become-2s
+    Give me your arm, how fat have you gotten
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+                        Grammar performance comparison
+--------------------------------------------------------------------------------
+Lab 7 initial grammar on provided test corpus -> use Lab 6 final grammar
+--------------------------------------------------------------------------------
+How many items parsed:                                  |          19          |
+What is the average number of parses per parsed item:   |        27.47         |
+How many parses did the most ambiguous item receive:    |         208          |
+>>> The ambiguities from NP coordination and verb morphology persist.
+--------------------------------------------------------------------------------
+Lab 7 initial grammar on our custom test suite -> use Lab 6 final grammar
+--------------------------------------------------------------------------------
+How many items parsed:                                  |          18          |
+What is the average number of parses per parsed item:   |        43.22         |
+How many parses did the most ambiguous item receive:    |         104          |
+>>> Other than underspecified morphology for verb, we also see ambiguities from
+Underspecified morphology for pronouns and NP coordination.
+--------------------------------------------------------------------------------
+Lab 7 final grammar on provided test corpus
+--------------------------------------------------------------------------------
+How many items parsed:                                  |          12          |
+What is the average number of parses per parsed item:   |         7.67         |
+How many parses did the most ambiguous item receive:    |          30          |
+>>> The ambiguities from NP coordination and verb morphology persist.
+--------------------------------------------------------------------------------
+Lab 7 final grammar on our custom test suite
+--------------------------------------------------------------------------------
+How many items parsed:                                  |          12          |
+What is the average number of parses per parsed item:   |        11.64         |
+How many parses did the most ambiguous item receive:    |          90          |
+>>> The ambiguities from NP coordination and verb morphology persist.
+--------------------------------------------------------------------------------
+Our ambiguity is reducing, however, our # of items parses is also reducing. We need to make additional changes:
+(1) Verb-pc rules: don't chain. Instead, use LRTs to capture what is possible in the same position class. 
+(2) Analysis of genitive possession. Need to incorporate feedback from Lab 5
+(3) Test suite: need to audit our items. We marked things as (un)grammatical based on what we thought, not what we observed.
+(4) Negation + irrealis. In the past tense, negation requires IRR. In the non-past it does not. We are not properly accounting for this.
